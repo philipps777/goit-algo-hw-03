@@ -1,31 +1,49 @@
-import os
 import shutil
+import argparse
+from pathlib import Path
 
 
-def copy_files(first_path, given_path):
+def copy_files(source_file, destination_dir):
+    destination_path = Path(destination_dir)
+    file_name = source_file.name
+    extension = source_file.suffix.lower()
+    dest_subdir = destination_path / extension.strip('.')
 
-    if not os.path.exists(first_path):
-        print(f"Directory {first_path} is absent.")
-        return
+    if not dest_subdir.exists():
+        dest_subdir.mkdir(parents=True, exist_ok=True)
 
-    if not os.path.exists(given_path):
-        os.makedirs(given_path)
+    try:
+        shutil.copy2(source_file, dest_subdir)
+    except (shutil.Error, IOError) as e:
+        print(f"Error copying file {source_file}: {e}")
 
-    for item in os.listdir(first_path):
-        item_path = os.path.join(first_path, item)
-        given_item_path = os.path.join(given_path, item)
 
-        if os.path.isdir(item_path):
-            copy_files(item_path, given_item_path)
-
-        elif os.path.isfile(item_path):
-            shutil.copy2(item_path, given_item_path)
-            print(f"File copied: {item_path} -> {given_item_path}")
+def recursive_copy(source_dir, destination_dir):
+    source_path = Path(source_dir)
+    for item in source_path.iterdir():
+        if item.is_dir():
+            recursive_copy(item, destination_dir)
         else:
-            print(f"Unknown element: {item_path}")
+            copy_files(item, destination_dir)
 
 
-first_directory = r"E:\path"
-given_directory = r"C:\destination"
+def main():
+    parser = argparse.ArgumentParser(
+        description="Recursively copies files and sorts them by extension in another directory")
+    parser.add_argument("source_dir", type=Path, help="Source directory")
+    parser.add_argument("destination_dir", type=Path, nargs='?', default=Path(
+        'dist'), help="Destination directory (default is dist)")
+    args = parser.parse_args()
 
-copy_files(first_directory, given_directory)
+    source_dir = args.source_dir
+    destination_dir = args.destination_dir
+
+    if not destination_dir.exists():
+        destination_dir.mkdir(parents=True, exist_ok=True)
+
+    recursive_copy(source_dir, destination_dir)
+    print("Done! Files copied and sorted!")
+
+
+if __name__ == "__main__":
+    main()
