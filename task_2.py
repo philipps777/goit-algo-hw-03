@@ -36,7 +36,7 @@ def draw_koch_snowflake(size=300):
         print("Рекурсія вибрана більше 6. Використовуємо рівень рекурсії 6.")
         order = 6
 
-    if order != 0:
+    if order > 0:
         koch_snowflake(t, order, size)
 
     window.mainloop()
